@@ -16,13 +16,25 @@ class HistoryDiskonViewSet(viewsets.ModelViewSet):
 
 
 class ProdukViewSet(viewsets.ModelViewSet):
-    queryset = Produk.objects.all()
     serializer_class = ProdukSerializer
 
+    def get_queryset(self):
+        queryset = Produk.objects.all()
+        kode = self.request.query_params.get('kode_produk', None)
+        if kode is not None:
+            queryset = queryset.filter(kode_produk=kode)
+        return queryset
 
-class PelangganViewSet(viewsets.ModelViewSet):
-    queryset = Pelanggan.objects.all()
+
+class PelangganViewSet(viewsets.ModelViewSet):    
     serializer_class = PelangganSerializer
+
+    def get_queryset(self):
+        queryset = Pelanggan.objects.all()
+        email = self.request.query_params.get('email_user', None)
+        if email is not None:
+            queryset = queryset.filter(email=email)
+        return queryset
 
 
 class PembayaranViewSet(viewsets.ModelViewSet):
@@ -39,7 +51,7 @@ class PesananViewSet(viewsets.ModelViewSet):
     serializer_class = PesananSerializer
 
     def get_queryset(self):
-        queryset = Pesanan.objects.all()
+        queryset = Pesanan.objects.filter(kode_pembayaran__isnull=True)
         kode_pesanan = self.request.query_params.get('kode_pesanan', None)
         pemesan = self.request.query_params.get('email_pemesan', None)
         if kode_pesanan is not None:
@@ -126,3 +138,7 @@ class DaftarKeinginanViewSet(viewsets.ModelViewSet):
         if user is not None:
             queryset = queryset.filter(email=user)
         return queryset
+
+class BarangKeinginanViewSet(viewsets.ModelViewSet):
+    queryset = DaftarKeinginan.objects.all()
+    serializer_class = BarangKeinginanSerializer

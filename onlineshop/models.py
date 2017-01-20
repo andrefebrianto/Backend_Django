@@ -97,6 +97,7 @@ class Alamat(models.Model):
     class Meta:
         managed = False
         db_table = 'alamat'
+        unique_together = (('email', 'alamat_lengkap'),)
 
     def __str__(self):
         return '%s, %s, %s' % (self.alamat_lengkap, kode_kota)
@@ -105,7 +106,7 @@ class Alamat(models.Model):
 class Pembayaran(models.Model):
     kode_pembayaran = models.CharField(db_column='KODE_PEMBAYARAN', primary_key=True, max_length=12)  # Field name made lowercase.
     kode_pesanan = models.ForeignKey('Pesanan', models.DO_NOTHING, db_column='KODE_PESANAN')  # Field name made lowercase.
-    waktu_pembayaran = models.DateTimeField(db_column='WAKTU_PEMBAYARAN')  # Field name made lowercase.
+    waktu_pembayaran = models.DateTimeField(db_column='WAKTU_PEMBAYARAN', auto_now_add=True)  # Field name made lowercase.
     total_belanja = models.DecimalField(db_column='TOTAL_BELANJA', max_digits=8, decimal_places=0)  # Field name made lowercase.
     status_pembayaran = models.IntegerField(db_column='STATUS_PEMBAYARAN', blank=True, null=True)  # Field name made lowercase.
 
@@ -121,7 +122,7 @@ class Pesanan(models.Model):
     kode_pesanan = models.CharField(db_column='KODE_PESANAN', primary_key=True, max_length=15)  # Field name made lowercase.
     email = models.ForeignKey(Pelanggan, models.DO_NOTHING, db_column='EMAIL')  # Field name made lowercase.
     kode_pembayaran = models.ForeignKey(Pembayaran, models.DO_NOTHING, db_column='KODE_PEMBAYARAN', blank=True, null=True)  # Field name made lowercase.
-    waktu_pesanan = models.DateTimeField(db_column='WAKTU_PESANAN')  # Field name made lowercase.
+    waktu_pesanan = models.DateTimeField(db_column='WAKTU_PESANAN', auto_now_add=True)  # Field name made lowercase.
 
     class Meta:
         managed = False
@@ -136,9 +137,9 @@ class Produk(models.Model):
     kode_merek = models.ForeignKey(Merek, models.DO_NOTHING, db_column='KODE_MEREK', related_name='produk')  # Field name made lowercase.
     nama_produk = models.CharField(db_column='NAMA_PRODUK', max_length=50)  # Field name made lowercase.
     material = models.CharField(db_column='MATERIAL', max_length=50, blank=True, null=True)  # Field name made lowercase.
-    deskripsi_produk = models.CharField(db_column='DESKRIPSI_PRODUK', max_length=5000, blank=True, null=True)  # Field name made lowercase.
+    deskripsi_produk = models.TextField(db_column='DESKRIPSI_PRODUK', blank=True, null=True)  # Field name made lowercase.
     negara_pemroduksi = models.CharField(db_column='NEGARA_PEMRODUKSI', max_length=30, blank=True, null=True)  # Field name made lowercase.
-    gambar = models.TextField(db_column='GAMBAR', blank=True, null=True)  # Field name made lowercase.
+    gambar = models.CharField(db_column='GAMBAR', max_length=250, blank=True, null=True)  # Field name made lowercase.
     stok = models.DecimalField(db_column='STOK', max_digits=8, decimal_places=0)  # Field name made lowercase.
 
     class Meta:
@@ -150,7 +151,7 @@ class Produk(models.Model):
 
 
 class Barangpesanan(models.Model):
-    id_barang_pesanan = models.IntegerField(db_column='ID_BARANG_PESANAN', primary_key=True)  # Field name made lowercase.
+    id_barang_pesanan = models.AutoField(db_column='ID_BARANG_PESANAN', primary_key=True)  # Field name made lowercase.
     kode_produk = models.ForeignKey('Produk', models.DO_NOTHING, db_column='KODE_PRODUK')  # Field name made lowercase.
     kode_pesanan = models.ForeignKey('Pesanan', models.DO_NOTHING, db_column='KODE_PESANAN', related_name='barangpesanan')  # Field name made lowercase.
     kuantitas = models.DecimalField(db_column='KUANTITAS', max_digits=8, decimal_places=0)  # Field name made lowercase.
@@ -168,7 +169,8 @@ class DaftarKeinginan(models.Model):
     id_daftar_keinginan = models.AutoField(db_column='ID_DAFTAR_KEINGINAN', primary_key=True)  # Field name made lowercase.
     kode_produk = models.ForeignKey('Produk', models.DO_NOTHING, db_column='KODE_PRODUK')  # Field name made lowercase.
     email = models.ForeignKey('Pelanggan', models.DO_NOTHING, db_column='EMAIL')  # Field name made lowercase.
-    tanggal_terdaftar = models.DateTimeField(db_column='TANGGAL_TERDAFTAR')  # Field name made lowercase.
+    tanggal_terdaftar = models.DateTimeField(db_column='TANGGAL_TERDAFTAR', auto_now_add
+    =True)  # Field name made lowercase.
 
     class Meta:
         managed = False
@@ -221,8 +223,6 @@ class Historyharga(models.Model):
 
     def __str__(self):
         return '%s - %s' % (self.kode_produk, harga)
-
-
 
 
 class Pengiriman(models.Model):

@@ -1,5 +1,6 @@
 from onlineshop.models import *
 from rest_framework import serializers
+from django.db.models import Max
 
 
 class MerekSerializer(serializers.ModelSerializer):
@@ -38,11 +39,54 @@ class ProvinsiSerializer(serializers.ModelSerializer):
 
 
 class AlamatSerializer(serializers.ModelSerializer):
-    kode_kecamatan = KecamatanSerializer(read_only=True)
+    #kode_kecamatan = KecamatanSerializer(read_only=True)
 
     class Meta:
         model =  Alamat
         fields = '__all__'
+
+
+class DiskonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Historydiskon
+        fields = ('kode_produk', 'besar_diskon')
+
+
+class HargaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Historyharga
+        fields = ('kode_produk', 'harga')
+
+
+class ProdukSerializer(serializers.ModelSerializer):
+    hargabarang = serializers.SerializerMethodField('get_latest_harga')
+    diskon = serializers.SerializerMethodField('get_latest_diskon')
+    kode_merek = MerekSerializer(read_only=True)
+    
+    class Meta:
+        model = Produk
+        fields = '__all__'
+
+    def get_latest_harga(self, kode_produk):
+        return Produk.objects.values('hargabarang__kode_produk').annotate(latest_date=Max('hargabarang__waktuharga')).filter(kode_produk = kode_produk.kode_produk).annotate(latest_harga= Max('hargabarang__harga'))
+
+    def get_latest_diskon(self, kode_produk):
+        return Produk.objects.values('diskon__kode_produk').annotate(latest_date=Max('diskon__waktu_diskon')).filter(kode_produk = kode_produk.kode_produk).annotate(latest_diskon = Max('diskon__besar_diskon'))
+
+
+class MetaProdukSerializer(serializers.ModelSerializer):
+    hargabarang = serializers.SerializerMethodField('get_latest_harga')
+    diskon = serializers.SerializerMethodField('get_latest_diskon')
+
+    class Meta:
+        model = Produk
+        fields = ('kode_produk','nama_produk', 'hargabarang', 'diskon', 'gambar', 'stok')
+
+    def get_latest_harga(self, kode_produk):
+        return Produk.objects.values('hargabarang__kode_produk').annotate(latest_date=Max('hargabarang__waktuharga')).filter(kode_produk = kode_produk.kode_produk).annotate(latest_harga= Max('hargabarang__harga'))
+
+    def get_latest_diskon(self, kode_produk):
+        return Produk.objects.values('diskon__kode_produk').annotate(latest_date=Max('diskon__waktu_diskon')).filter(kode_produk = kode_produk.kode_produk).annotate(latest_diskon = Max('diskon__besar_diskon'))
 
 
 class BarangPesananSerializer(serializers.ModelSerializer):
@@ -51,46 +95,32 @@ class BarangPesananSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class DetilBarangPesananSerializer(serializers.ModelSerializer):
+    kode_produk = MetaProdukSerializer(read_only=True)
+
+    class Meta:
+        model = Barangpesanan
+        fields = '__all__'
+
+
 class PesananSerializer(serializers.ModelSerializer):
-    barangpesanan = BarangPesananSerializer(many=True, read_only=True)
+    barangpesanan = DetilBarangPesananSerializer(many=True, read_only=True)
 
     class Meta:
         model = Pesanan
         fields = '__all__'
 
 
-class DiskonSerializer(serializers.ModelSerializer):
+class DaftarKeinginanSerializer(serializers.ModelSerializer):
+    kode_produk = MetaProdukSerializer(read_only=True)
+    #kode_produk = serializers.PrimaryKeyRelatedField(queryset=Produk.objects.all())
+
     class Meta:
-        model = Historydiskon
-        fields = ('__all__')
-
-
-class HargaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Historyharga
-        fields = ('__all__')
-
-
-class ProdukSerializer(serializers.ModelSerializer):
-    hargabarang = HargaSerializer(many=True, read_only=True)
-    diskon = DiskonSerializer(many=True, read_only=True)
-    
-    class Meta:
-        model = Produk
+        model = DaftarKeinginan
         fields = '__all__'
 
 
-class MetaProdukSerializer(serializers.ModelSerializer):
-    hargabarang = HargaSerializer(many=True, read_only=True)
-    diskon = DiskonSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Produk
-        fields = ('kode_produk','nama_produk', 'hargabarang', 'diskon', 'stok')
-
-
-class DaftarKeinginanSerializer(serializers.ModelSerializer):
-    kode_produk = MetaProdukSerializer(read_only=True)
+class BarangKeinginanSerializer(serializers.ModelSerializer):    
 
     class Meta:
         model = DaftarKeinginan
